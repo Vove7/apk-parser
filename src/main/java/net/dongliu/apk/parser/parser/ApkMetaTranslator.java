@@ -1,16 +1,34 @@
 package net.dongliu.apk.parser.parser;
 
-import net.dongliu.apk.parser.bean.*;
+import net.dongliu.apk.parser.bean.ActivityInfo;
+import net.dongliu.apk.parser.bean.ApkMeta;
+import net.dongliu.apk.parser.bean.GlEsVersion;
+import net.dongliu.apk.parser.bean.IconPath;
+import net.dongliu.apk.parser.bean.MetaData;
+import net.dongliu.apk.parser.bean.Permission;
+import net.dongliu.apk.parser.bean.ServiceInfo;
+import net.dongliu.apk.parser.bean.UseFeature;
 import net.dongliu.apk.parser.struct.ResourceValue;
 import net.dongliu.apk.parser.struct.resource.Densities;
 import net.dongliu.apk.parser.struct.resource.ResourceEntry;
 import net.dongliu.apk.parser.struct.resource.ResourceTable;
 import net.dongliu.apk.parser.struct.resource.Type;
-import net.dongliu.apk.parser.struct.xml.*;
+import net.dongliu.apk.parser.struct.xml.Attribute;
+import net.dongliu.apk.parser.struct.xml.Attributes;
+import net.dongliu.apk.parser.struct.xml.XmlCData;
+import net.dongliu.apk.parser.struct.xml.XmlNamespaceEndTag;
+import net.dongliu.apk.parser.struct.xml.XmlNamespaceStartTag;
+import net.dongliu.apk.parser.struct.xml.XmlNodeEndTag;
+import net.dongliu.apk.parser.struct.xml.XmlNodeStartTag;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
 
 /**
  * trans binary xml to text
@@ -31,6 +49,9 @@ public class ApkMetaTranslator implements XmlStreamer {
         this.resourceTable = Objects.requireNonNull(resourceTable);
         this.locale = locale;
     }
+
+    private ActivityInfo lastActivityInfo;
+    private ServiceInfo lastServiceInfo;
 
     @Override
     public void onStartTag(XmlNodeStartTag xmlNodeStartTag) {
@@ -128,6 +149,53 @@ public class ApkMetaTranslator implements XmlStreamer {
                         attributes.getString("android:protectionLevel"));
                 apkMetaBuilder.addPermissions(permission);
                 break;
+
+            case "action": {
+                if (depth < 2) break;
+                if ("intent-filter".equals(tagStack[depth - 1])) {// "activity".equals() {
+                    switch (tagStack[depth - 2]) {
+                        case "activity": {
+                            if ("android.intent.action.MAIN".equals(attributes.getString("name"))) {
+                                if (lastActivityInfo != null) {
+                                    lastActivityInfo.setMainActivity(true);
+                                    apkMetaBuilder.setMainActivity(lastActivityInfo);
+                                }
+                            }
+                        }
+                        //case "service":...
+                        break;
+                    }
+                }
+            }
+            break;
+            case "activity": {
+                ActivityInfo activityInfo = new ActivityInfo(
+                        attributes.getString("label"),
+                        attributes.getString("name")
+                );
+                lastActivityInfo = activityInfo;
+                apkMetaBuilder.addActivityInfo(activityInfo);
+            }
+            break;
+            case "service": {
+                ServiceInfo serviceInfo = new ServiceInfo(
+                        attributes.getString("name"),
+                        attributes.getString("permission")
+                );
+                lastServiceInfo = serviceInfo;
+                apkMetaBuilder.addServiceInfo(serviceInfo);
+            }
+            break;
+            case "meta-data": {
+                if ("application".equals(tagStack[depth - 1])) {
+                    MetaData data = new MetaData(
+                            attributes.getString("name"),
+                            attributes.getString("value")
+                    );
+                    apkMetaBuilder.addMetaData(data);
+                }
+            }
+            break;
         }
         tagStack[depth++] = xmlNodeStartTag.getName();
     }

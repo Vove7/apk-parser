@@ -2,9 +2,12 @@ package net.dongliu.apk.parser.bean;
 
 import net.dongliu.apk.parser.AbstractApkFile;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 /**
  * Apk meta info
@@ -40,6 +43,12 @@ public class ApkMeta {
     private final List<String> usesPermissions;
     private final List<UseFeature> usesFeatures;
     private final List<Permission> permissions;
+    private final List<ActivityInfo> activityInfos;
+    private ActivityInfo mainActivity;
+    private final List<ServiceInfo> serviceInfos;
+
+
+    private final Map<String, String> metaDatas;
 
     private ApkMeta(Builder builder) {
         packageName = builder.packageName;
@@ -63,6 +72,10 @@ public class ApkMeta {
         usesPermissions = builder.usesPermissions;
         usesFeatures = builder.usesFeatures;
         permissions = builder.permissions;
+        activityInfos = builder.activityInfos;
+        metaDatas = builder.metaDatas;
+        mainActivity = builder.mainActivity;
+        serviceInfos = builder.serviceInfos;
     }
 
     public static Builder newBuilder() {
@@ -87,6 +100,10 @@ public class ApkMeta {
 
     public String getTargetSdkVersion() {
         return targetSdkVersion;
+    }
+
+    public ActivityInfo getMainActivity() {
+        return mainActivity;
     }
 
     @Nullable
@@ -114,8 +131,20 @@ public class ApkMeta {
         return platformBuildVersionName;
     }
 
+    public List<ServiceInfo> getServiceInfos() {
+        return serviceInfos;
+    }
+
     public List<String> getUsesPermissions() {
         return usesPermissions;
+    }
+
+    public List<ActivityInfo> getActivityInfos() {
+        return activityInfos;
+    }
+
+    public Map<String, String> getMetaDatas() {
+        return metaDatas;
     }
 
     public void addUsesPermission(String permission) {
@@ -197,7 +226,11 @@ public class ApkMeta {
                 + "versionCode: \t" + versionCode + "\n"
                 + "minSdkVersion: \t" + minSdkVersion + "\n"
                 + "targetSdkVersion: \t" + targetSdkVersion + "\n"
-                + "maxSdkVersion: \t" + maxSdkVersion;
+                + "maxSdkVersion: \t" + maxSdkVersion + "\n"
+                + "activities: \t" + activityInfos.toString() + "\n"
+                + "services: \t" + serviceInfos.toString() + "\n"
+                + "meta-data: \t" + metaDatas.toString() + "\n"
+                ;
     }
 
     public static final class Builder {
@@ -214,6 +247,7 @@ public class ApkMeta {
         private String compileSdkVersionCodename;
         private String platformBuildVersionCode;
         private String platformBuildVersionName;
+        private ActivityInfo mainActivity;
         private GlEsVersion glEsVersion;
         private boolean anyDensity;
         private boolean smallScreens;
@@ -222,6 +256,9 @@ public class ApkMeta {
         private List<String> usesPermissions = new ArrayList<>();
         private List<UseFeature> usesFeatures = new ArrayList<>();
         private List<Permission> permissions = new ArrayList<>();
+        private final List<ActivityInfo> activityInfos = new ArrayList<>();
+        private final List<ServiceInfo> serviceInfos = new ArrayList<>();
+        private final Map<String, String> metaDatas = new HashMap<>();
 
         private Builder() {
         }
@@ -234,6 +271,10 @@ public class ApkMeta {
         public Builder setLabel(String label) {
             this.label = label;
             return this;
+        }
+
+        public void setMainActivity(ActivityInfo mainActivity) {
+            this.mainActivity = mainActivity;
         }
 
         public Builder setIcon(String icon) {
@@ -321,6 +362,7 @@ public class ApkMeta {
             return this;
         }
 
+
         public Builder addUsesFeature(UseFeature usesFeature) {
             this.usesFeatures.add(usesFeature);
             return this;
@@ -328,6 +370,21 @@ public class ApkMeta {
 
         public Builder addPermissions(Permission permission) {
             this.permissions.add(permission);
+            return this;
+        }
+
+        public Builder addActivityInfo(ActivityInfo activityInfo) {
+            this.activityInfos.add(activityInfo);
+            return this;
+        }
+
+        public Builder addMetaData(MetaData metaData) {
+            this.metaDatas.put(metaData.name, metaData.value);
+            return this;
+        }
+
+        public Builder addServiceInfo(ServiceInfo serviceInfo) {
+            this.serviceInfos.add(serviceInfo);
             return this;
         }
 

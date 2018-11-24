@@ -11,8 +11,9 @@ import java.util.Locale;
  */
 public class Main {
     public static void main(String[] args) throws IOException, CertificateException {
-        String action = args[0];
-        String apkPath = args[1];
+        String action = "meta";
+        String apkPath = "app-debug.apk";
+
         try (ApkFile apkFile = new ApkFile(apkPath)) {
             apkFile.setPreferredLocale(Locale.getDefault());
             switch (action) {
@@ -24,6 +25,12 @@ public class Main {
                     break;
                 case "signer":
                     System.out.println(apkFile.getApkSingers());
+                    break;
+                case "meta-data":
+                    System.out.println(apkFile.getApkMeta().getMetaDatas());
+                    break;
+                case "activities":
+                    System.out.println(apkFile.getApkMeta().getActivityInfos());
                     break;
                 default:
             }
